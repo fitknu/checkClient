@@ -1,0 +1,1 @@
+export const serverIP = "https://druven.eu-gb.mybluemix.net"
