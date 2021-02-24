@@ -1,5 +1,5 @@
 import { Button, Container, Divider, fade, Grid, IconButton, InputAdornment, InputBase, List, ListItem, makeStyles, TextField } from "@material-ui/core";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import SearchIcon from '@material-ui/icons/Search';
 import CloseIcon from '@material-ui/icons/Close';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -7,7 +7,7 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import { Link as RouterLink, useLocation } from 'react-router-dom'
 import BoardOnline from "./BoardOnline";
 import { serverIP } from "../config";
-
+import Fuse from 'fuse.js'
 const useStyles = makeStyles(theme => ({
     search: {
         borderRadius: theme.shape.borderRadius,
@@ -115,16 +115,43 @@ function Server()
     {
         setLoading(true)
         fetch(`${serverIP}/rooms`).then(data => data.json())
-            .then(data => setServers(data))
-            .then(_ => setLoading(false))
+            .then(data => 
+            {
+                setServers(data)
+                setSearchServers(data)
+                setLoading(false)
+            })
             .catch(err => console.log(err))
     }, [])
 
     const [search, setSearch] = useState("")
+    const [fuse, setFuse] = useState(null)
+    const [searchServers, setSearchServers] = useState([])
+    useEffect(() =>
+    {
+        const f = new Fuse(servers, { keys: ['name'] })
+        setFuse(f)
+    }, [servers])
+    const Search = text =>
+    {
+        setSearch(text)
+        if (text.length === 0)
+        {
+            setSearchServers(servers)
+        } else 
+        {
+            const result = fuse.search(text)
+            const resultsMap = result.map(item => item.item)
+            setSearchServers(resultsMap)
+        }
+
+    }
     if (query.get('id') && query.get('mode'))
     {
         return <BoardOnline id={parseInt(query.get('id'))} mode={query.get('mode')} />
     }
+
+
     return (
         <>
             <Container maxWidth="md">
@@ -136,7 +163,7 @@ function Server()
                 <br />
                 <TextField
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e) => Search(e.target.value)}
                     label="Поиск севера"
                     variant="outlined"
                     fullWidth
@@ -148,7 +175,7 @@ function Server()
                         ),
                         endAdornment: (
                             <InputAdornment position="end">
-                                <IconButton onClick={() => setSearch("")}
+                                <IconButton onClick={() => Search("")}
                                     style={search.length > 0 ?
                                         { display: 'inline-block' } :
                                         { display: 'none' }}>
@@ -173,7 +200,7 @@ function Server()
                         <ListItem style={{ display: 'flex', marginTop: '1rem', justifyContent: 'center' }}>
                             <CircularProgress size="100px" />
                         </ListItem>
-                        : servers.map((server, index) => 
+                        : searchServers.map((server, index) => 
                         {
                             return <Row name={server.name} id={server.id} status={server.status} key={server.name} index={index} joinMode={joinMode} />
                         })}

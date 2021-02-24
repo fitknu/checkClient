@@ -8,6 +8,7 @@ import stateOnline from "../Game/stateOnline"
 import Logic from '../Game/Logic'
 import colClick_online from "../Game/colClick_online"
 import imgs from '../imgs.json'
+import { serverIP } from "../config"
 
 const useStyles = makeStyles(theme => ({
     root: {
@@ -75,7 +76,7 @@ function BoardOnline({ name, id, mode })
     const [load, setLoad] = useState("loading")
     useEffect(() =>
     {
-        const IP = "http://localhost:6001/"
+        const IP = serverIP
         socketRef.current = io(IP)
 
         const timer = setTimeout(() =>
