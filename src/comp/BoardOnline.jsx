@@ -74,6 +74,7 @@ function BoardOnline({ name, id, mode })
     const containerRef = useRef()
     const [size, setSize] = useState(200)
     const [load, setLoad] = useState("loading")
+
     useEffect(() =>
     {
         const IP = serverIP

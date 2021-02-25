@@ -15,15 +15,15 @@ function useRouteName()
 
     if (onlineMatch !== null)
     {
-        return "Онлайн"
+        return "Онлайн игра"
     }
     if (botMatch !== null)
     {
-        return "Бот"
+        return "Игра против компьютера"
     }
     if (offlineMatch !== null)
     {
-        return "Оффлайн"
+        return "Оффлайн игра"
     }
     return "Druven"
 }

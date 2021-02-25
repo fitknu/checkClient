@@ -4,7 +4,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import CloseIcon from '@material-ui/icons/Close';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import LinearProgress from '@material-ui/core/LinearProgress';
-import { Link as RouterLink, useLocation } from 'react-router-dom'
+import { Link as RouterLink, useHistory, useLocation } from 'react-router-dom'
 import BoardOnline from "./BoardOnline";
 import { serverIP } from "../config";
 import Fuse from 'fuse.js'
@@ -146,6 +146,16 @@ function Server()
         }
 
     }
+    const history = useHistory()
+    const goRandom = () =>
+    {
+        if (searchServers.length === 0)
+        {
+            return
+        }
+        const ip = searchServers[Math.floor(Math.random() * searchServers.length)]
+        history.push(`?id=${ip.id}&mode=${joinMode}`)
+    }
     if (query.get('id') && query.get('mode'))
     {
         return <BoardOnline id={parseInt(query.get('id'))} mode={query.get('mode')} />
@@ -156,7 +166,8 @@ function Server()
         <>
             <Container maxWidth="md">
                 <br />
-                <Button size="large" variant="contained" color="secondary">
+                <Button onClick={goRandom}
+                    size="large" variant="contained" color="secondary">
                     Быстрая игра
                 </Button>
                 <br />
