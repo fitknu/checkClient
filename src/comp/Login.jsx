@@ -149,7 +149,6 @@ function Login()
                     color="primary"
                 >Зарегистрироваться</Button>
             </form>}
-
         </CardContent>
     </Card>)
 }

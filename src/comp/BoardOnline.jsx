@@ -211,7 +211,7 @@ function BoardOnline({ name, id, mode })
     return <Container ref={containerRef} maxWidth="md"
         className={classes.root}>
         <div
-            className={game.current_player === Logic.player1 ?
+            className={game.current_player === game.me ?
                 classes.turn_me : classes.turn_other}
         >
             {game.grid.map((row, rowIndex) => 
