@@ -8,7 +8,13 @@ import { Link as RouterLink, useHistory, useLocation } from 'react-router-dom'
 import BoardOnline from "./BoardOnline";
 import { serverIP } from "../config";
 import Fuse from 'fuse.js'
+import Chat from "./Chat";
+import Test from "./Test";
 const useStyles = makeStyles(theme => ({
+    root: {
+        // backgroundColor: theme.palette.action.hover,
+        height: '100%'
+    },
     search: {
         borderRadius: theme.shape.borderRadius,
         backgroundColor: fade(theme.palette.common.white, 0.15),
@@ -77,7 +83,7 @@ function Row({ name, id, status, index, joinMode })
                 <Grid item xs={12} sm={4} container justify="flex-end">
                     <Button fullWidth component={RouterLink}
                         to={`?id=${id}&mode=${joinMode}`}
-                        variant="outlined" color="secondary" >Подключиться</Button>
+                        variant="outlined" color="inherit" >Подключиться</Button>
                 </Grid>
                 <Divider />
             </Grid>
@@ -164,7 +170,9 @@ function Server()
 
     return (
         <>
-            <Container maxWidth="md">
+
+            <Container maxWidth="md" className={classes.root}>
+                <Chat />
                 <br />
                 <Button onClick={goRandom}
                     size="large" variant="contained" color="secondary">
