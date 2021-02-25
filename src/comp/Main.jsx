@@ -3,6 +3,7 @@ import Profile from "./Profile";
 import { Route, Switch, BrowserRouter, useRouteMatch } from "react-router-dom";
 import BoardOffline from "./BoardOffline";
 import Navigation from "./Navigation";
+import BoardBot from "./BoardBot";
 
 
 function Main()
@@ -13,8 +14,7 @@ function Main()
             <Switch>
                 <Route exact path='/' component={Server} />
                 <Route path="/online" component={Server} />
-                <Route path="/bot">
-                </Route>
+                <Route path="/bot" component={BoardBot} />
                 <Route path="/offline" component={BoardOffline}>
                 </Route>
                 <Route path="/user">
