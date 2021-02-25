@@ -27,7 +27,7 @@ function Chat()
         { name: 'Vlad', text: 'hello agian', time: '12:00' },
         { name: 'Vlad', text: 'hello agian', time: '12:00' },
         { name: 'Vlad', text: 'hello agian', time: '12:00' },
-        { name: 'Vlad', text: 'hello agian', time: '12:00' }]
+        { name: 'Vlad', text: '1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 1 2 3 ', time: '12:00' }]
         setMessages(next)
     }, [])
     const handleSubmit = (event) =>
@@ -41,7 +41,7 @@ function Chat()
             return
         }
         setMessages([...messasges, { name: 'Archie', text: myMessage, time: '10:00' }])
-        // setMyMessage("")
+        setMyMessage("")
         console.log('Submit')
     }
     const handleKey = (event) =>
@@ -78,7 +78,7 @@ function Chat()
                         {messasges.map((message, messageIndex) =>
                         {
                             const { name, text, time } = message
-                            return <ListItem key={messageIndex}>
+                            return <ListItem key={messageIndex} alignItems="flex-start">
                                 <ListItemAvatar>
                                     <Avatar>
                                         {name.slice(0, 1)}
@@ -105,7 +105,7 @@ function Chat()
                     </List>
                     <List>
                         <Divider />
-                        <ListItem>
+                        <ListItem alignItems="flex-start">
                             <ListItemAvatar title="Моё фото">
                                 <Avatar>
                                     V
