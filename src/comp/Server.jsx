@@ -156,7 +156,7 @@ function Server()
         <>
             <Container maxWidth="md">
                 <br />
-                <Button size="large" variant="contained" color="primary">
+                <Button size="large" variant="contained" color="secondary">
                     Быстрая игра
                 </Button>
                 <br />
