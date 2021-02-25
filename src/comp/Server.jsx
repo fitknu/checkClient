@@ -225,7 +225,7 @@ function Server()
                         })}
                 </List>
             </Container>
-            {/* <Chat /> */}
+            <Chat />
 
             <br />
         </>

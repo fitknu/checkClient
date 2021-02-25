@@ -1,5 +1,5 @@
 import { Button, CircularProgress, Container, makeStyles, Typography } from "@material-ui/core"
-import { useEffect, useReducer, useRef, useState } from "react"
+import { useContext, useEffect, useReducer, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import { Link as RouterLink } from 'react-router-dom'
 import getCssClass from "../Game/getCssClass"
@@ -9,6 +9,7 @@ import Logic from '../Game/Logic'
 import colClick_online from "../Game/colClick_online"
 import imgs from '../imgs.json'
 import { serverIP } from "../config"
+import SourceContext from "../Source/Source"
 
 const useStyles = makeStyles(theme => ({
     root: {
@@ -68,6 +69,7 @@ const useStyles = makeStyles(theme => ({
 }))
 function BoardOnline({ name, id, mode })
 {
+    const sourceAction = useContext(SourceContext).action
     const classes = useStyles()
     const [game, action] = useReducer(reducerOnline, stateOnline)
     const socketRef = useRef()
@@ -182,6 +184,17 @@ function BoardOnline({ name, id, mode })
         window.addEventListener('resize', resize)
         return () => window.removeEventListener('resize', resize)
     }, [])
+    useEffect(() =>
+    {
+        if (load === "game")
+        {
+            sourceAction({ type: 'setOnlineGameId', id })
+        } else 
+        {
+            sourceAction({ type: 'setOnlineGameId', id: null })
+        }
+        return () => sourceAction({ type: 'setOnlineGameId', id: null })
+    }, [load, id, sourceAction])
     if (load === "loading")
     {
         return (<Container ref={containerRef}
