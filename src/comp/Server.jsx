@@ -174,7 +174,7 @@ function Server()
             <Container maxWidth="md" className={classes.root}>
                 <br />
                 <Chat />
-
+                <br />
                 <Button onClick={goRandom}
                     size="large" variant="contained" color="secondary">
                     Быстрая игра
@@ -226,6 +226,7 @@ function Server()
                         })}
                 </List>
             </Container>
+            <br />
         </>
     )
 }

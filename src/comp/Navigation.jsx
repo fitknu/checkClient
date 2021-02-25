@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import { AppBar, IconButton, List, ListItem, ListItemIcon, ListItemText, SwipeableDrawer, Toolbar, Typography } from "@material-ui/core"
+import { AppBar, Dialog, IconButton, List, ListItem, ListItemIcon, ListItemText, SwipeableDrawer, Tab, Tabs, TextField, Toolbar, Typography } from "@material-ui/core"
 import { Link as RouterLink, useRouteMatch } from 'react-router-dom'
 import MenuIcon from '@material-ui/icons/Menu';
 import PeopleIcon from '@material-ui/icons/People';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import DesktopWindowsIcon from '@material-ui/icons/DesktopWindows';
 import SupervisedUserCircleRoundedIcon from '@material-ui/icons/SupervisedUserCircleRounded';
+import Login from "./Login";
 
 function useRouteName()
 {
@@ -33,6 +34,8 @@ function Navigation()
 
     const anchorRef = useRef()
     const routeName = useRouteName()
+
+    const [log, setLog] = useState(false)
     return <>
         <AppBar position="static">
             <Toolbar>
@@ -46,11 +49,21 @@ function Navigation()
                 <Typography variant="h6">
                     {routeName}
                 </Typography>
-                <IconButton style={{ marginLeft: 'auto' }} color="inherit">
+                <IconButton
+                    style={{ marginLeft: 'auto' }}
+                    color="inherit"
+                    onClick={() => setLog(true)}
+                >
                     <AccountCircleIcon />
                 </IconButton>
             </Toolbar>
         </AppBar>
+        <Dialog
+            open={log}
+            onClose={() => setLog(false)}
+        >
+            <Login />
+        </Dialog>
         <SwipeableDrawer
             anchor="left"
             open={menu}

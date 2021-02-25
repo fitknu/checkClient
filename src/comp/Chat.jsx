@@ -1,7 +1,8 @@
-import { Avatar, Button, Card, CardContent, CardHeader, Container, Divider, FormControl, Grid, IconButton, InputAdornment, List, ListItem, ListItemAvatar, ListItemText, makeStyles, TextField, Typography } from "@material-ui/core";
+import { Avatar, Button, Card, CardContent, CardHeader, Container, Divider, FormControl, Grid, IconButton, InputAdornment, Link, List, ListItem, ListItemAvatar, ListItemText, makeStyles, TextField, Typography } from "@material-ui/core";
 import { useEffect, useRef, useState } from "react";
 import SendIcon from '@material-ui/icons/Send';
 import ChatIcon from '@material-ui/icons/Chat';
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 const useStyles = makeStyles(theme => ({
     messages: {
         maxHeight: theme.breakpoints.values.sm,
@@ -19,6 +20,8 @@ function Chat()
     const classes = useStyles()
     const [myMessage, setMyMessage] = useState("")
     const [messasges, setMessages] = useState([])
+
+    const [logedIn, setLogedIn] = useState(true)
     const bottomMessageRef = useRef()
     useEffect(() =>
     {
@@ -105,6 +108,20 @@ function Chat()
                     </List>
                     <List>
                         <Divider />
+                        {!logedIn && <ListItem>
+                            <ListItemAvatar>
+                                <Avatar>
+                                    <AccountCircleIcon />
+                                </Avatar>
+                            </ListItemAvatar>
+                            <ListItemText
+                                primary={
+                                    <Typography>
+                                        <Link>Авторизуйтесь</Link>, чтобы использовать чат
+                                    </Typography>
+                                }
+                            />
+                        </ListItem>}
                         <ListItem alignItems="flex-start">
                             <ListItemAvatar title="Моё фото">
                                 <Avatar>
@@ -114,6 +131,7 @@ function Chat()
                             <ListItemText
                                 primary={
                                     <TextField
+                                        disabled={!logedIn}
                                         component="form"
                                         onSubmit={handleSubmit}
                                         onKeyPress={handleKey}
