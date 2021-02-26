@@ -7,6 +7,7 @@ import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import { io } from "socket.io-client";
 import { serverIP } from "../config";
+import Peer from "peerjs";
 const useStyles = makeStyles(theme => ({
     messages: {
         maxHeight: theme.breakpoints.values.sm,
@@ -21,7 +22,6 @@ const useStyles = makeStyles(theme => ({
 }))
 function Chat()
 {
-    const socketRef = useRef()
     const classes = useStyles()
     const [open, setOpen] = useState(false)
     const [myMessage, setMyMessage] = useState("")
@@ -29,6 +29,12 @@ function Chat()
 
     const [logedIn, setLogedIn] = useState(true)
     const bottomMessageRef = useRef()
+
+    const socketRef = useRef()
+    const [socketOnline, setSocketOnline] = useState(false)
+    const peerRef = useRef(new Peer())
+    const [peerId, setPeerId] = useState(null)
+    const [conns, setConns] = useState([])
     useEffect(() =>
     {
         const next = [
@@ -42,31 +48,95 @@ function Chat()
         {
             event.preventDefault()
         }
-        if (myMessage.length === 0)
+        if (myMessage.length === 0 || !socketOnline)
         {
             return
         }
-        socketRef.current.emit('message', "Vlad", myMessage)
-        // setMessages([...messasges, { name: 'Archie', text: myMessage, time: '10:00' }])
+        conns.forEach(conn => conn.send({ type: 'message', text: myMessage, name: "Archie" }))
+        // socketRef.current.emit('message', "Vlad", myMessage)
+        setMessages([...messasges, { name: 'Archie', text: myMessage, time: '10:00' }])
         setMyMessage("")
         console.log('Submit')
     }
 
     useEffect(() =>
     {
-        socketRef.current = io(serverIP)
-        socketRef.current.emit("joinChat")
-        socketRef.current.on('sucess', () =>
+        peerRef.current.on('open', id =>
         {
+            socketRef.current = io(serverIP)
+            socketRef.current.emit("joinChat")
+            socketRef.current.on('sucess', () =>
+            {
+                setSocketOnline(true)
+            })
+            socketRef.current.on('message', (name, text) =>
+            {
+                const date = new Date()
+                const time = `${date.getHours()}:${date.getMinutes()}`
+                setMessages(oldMessages => [...oldMessages, { name, text, time }])
+            })
 
-        })
-        socketRef.current.on('message', (name, text) =>
-        {
-            const date = new Date()
-            const time = `${date.getHours()}:${date.getMinutes()}`
-            setMessages(oldMessages => [...oldMessages, { name, text, time }])
+            socketRef.current.on('disconnect', () =>
+            {
+                const date = new Date()
+                const time = `${date.getHours()}:${date.getMinutes()}`
+                setSocketOnline(false)
+                setMessages(oldMessages => [...oldMessages, { name: "Server", text: "You're diconnected", time }])
+
+            })
+            console.log('Emitted my id ' + id);
+            socketRef.current.emit('peerId', id)
+            peerRef.current.on('connection', (conn) =>
+            {
+                conn.on('open', () =>
+                {
+                    console.log('Connected to ');
+                    conn.on('data', data =>
+                    {
+                        if (data.type === 'message')
+                        {
+                            const { name, text } = data
+                            const time = "10:00"
+                            setMessages(old => [...old, { name, text, time }])
+                        }
+                    })
+                    setConns(old => [...old, conn])
+                    conn.on('close', () =>
+                    {
+                        setConns(old => old.filter(oldC => oldC !== conn))
+                        console.log('Closed conn ')
+                    })
+                })
+            })
+            socketRef.current.on('peerId', otherPeerId =>
+            {
+                console.log('Got peerID from server ' + otherPeerId);
+                const conn = peerRef.current.connect(otherPeerId)
+                conn.on('open', () =>
+                {
+                    console.log('Connected to ' + otherPeerId);
+                    conn.on('data', data =>
+                    {
+                        if (data.type === 'message')
+                        {
+                            const { name, text } = data
+                            const time = "10:00"
+                            setMessages(old => [...old, { name, text, time }])
+                        }
+                    })
+                    setConns(old => [...old, conn])
+                    conn.on('close', () =>
+                    {
+                        setConns(old => old.filter(oldC => oldC !== conn))
+                        console.log('Closed conn ' + otherPeerId)
+                    })
+                })
+            })
         })
     }, [])
+
+
+
 
     const handleKey = (event) =>
     {
