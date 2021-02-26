@@ -5,6 +5,8 @@ import ChatIcon from '@material-ui/icons/Chat';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import { io } from "socket.io-client";
+import { serverIP } from "../config";
 const useStyles = makeStyles(theme => ({
     messages: {
         maxHeight: theme.breakpoints.values.sm,
@@ -19,6 +21,7 @@ const useStyles = makeStyles(theme => ({
 }))
 function Chat()
 {
+    const socketRef = useRef()
     const classes = useStyles()
     const [open, setOpen] = useState(false)
     const [myMessage, setMyMessage] = useState("")
@@ -29,7 +32,7 @@ function Chat()
     useEffect(() =>
     {
         const next = [
-            { name: 'Владислав', text: 'Всё вроде работает теперь нормально', time: '10:00' }
+            { name: 'Владислав', text: 'Пока у нас нет аккаутов так что всех зовут Влад ахахаха', time: '10:00' }
         ]
         setMessages(next)
     }, [])
@@ -43,10 +46,28 @@ function Chat()
         {
             return
         }
-        setMessages([...messasges, { name: 'Archie', text: myMessage, time: '10:00' }])
+        socketRef.current.emit('message', "Vlad", myMessage)
+        // setMessages([...messasges, { name: 'Archie', text: myMessage, time: '10:00' }])
         setMyMessage("")
         console.log('Submit')
     }
+
+    useEffect(() =>
+    {
+        socketRef.current = io(serverIP)
+        socketRef.current.emit("joinChat")
+        socketRef.current.on('sucess', () =>
+        {
+
+        })
+        socketRef.current.on('message', (name, text) =>
+        {
+            const date = new Date()
+            const time = `${date.getHours()}:${date.getMinutes()}`
+            setMessages(oldMessages => [...oldMessages, { name, text, time }])
+        })
+    }, [])
+
     const handleKey = (event) =>
     {
         if (event.key === 'Enter' && !event.shiftKey)
