@@ -1,0 +1,47 @@
+peerRef.current.on('connection', (conn) =>
+            {
+                conn.on('open', () =>
+                {
+                    console.log('Connected to ');
+                    conn.on('data', data =>
+                    {
+                        if (data.type === 'message')
+                        {
+                            const { name, text } = data
+                            const time = "10:00"
+                            setMessages(old => [...old, { name, text, time }])
+                        }
+                    })
+                    setConns(old => [...old, conn])
+                    conn.on('close', () =>
+                    {
+                        setConns(old => old.filter(oldC => oldC !== conn))
+                        console.log('Closed conn ')
+                    })
+                })
+            })
+            socketRef.current.on('peerId', otherPeerId =>
+            {
+                console.log('Got peerID from server ' + otherPeerId);
+                const conn = peerRef.current.connect(otherPeerId)
+                conn.on('open', () =>
+                {
+                    console.log('Connected to ' + otherPeerId);
+                    conn.on('data', data =>
+                    {
+                        if (data.type === 'message')
+                        {
+                            const { name, text } = data
+                            const time = "10:00"
+                            setMessages(old => [...old, { name, text, time }])
+                        }
+                    })
+                    setConns(old => [...old, conn])
+                    conn.on('close', () =>
+                    {
+                        setConns(old => old.filter(oldC => oldC !== conn))
+                        console.log('Closed conn ' + otherPeerId)
+                    })
+                })
+            })
+        })

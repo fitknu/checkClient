@@ -33,8 +33,22 @@ function Chat()
     const socketRef = useRef()
     const [socketOnline, setSocketOnline] = useState(false)
     const peerRef = useRef(new Peer())
-    const [peerId, setPeerId] = useState(null)
     const [conns, setConns] = useState([])
+
+    const [audios, setAudios] = useState([])
+    // const [got, setGot] = use
+    useEffect(() =>
+    {
+        navigator.mediaDevices
+            .getUserMedia({ audio: true })
+            .then(stream =>
+            {
+                setAudios([stream])
+            })
+            .catch((e) => console.log(e))
+        // setAudios(['fuck'])
+    }, [])
+
     useEffect(() =>
     {
         const next = [
@@ -63,76 +77,85 @@ function Chat()
     {
         peerRef.current.on('open', id =>
         {
-            socketRef.current = io(serverIP)
-            socketRef.current.emit("joinChat")
-            socketRef.current.on('sucess', () =>
-            {
-                setSocketOnline(true)
-            })
-            socketRef.current.on('message', (name, text) =>
-            {
-                const date = new Date()
-                const time = `${date.getHours()}:${date.getMinutes()}`
-                setMessages(oldMessages => [...oldMessages, { name, text, time }])
-            })
-
-            socketRef.current.on('disconnect', () =>
-            {
-                const date = new Date()
-                const time = `${date.getHours()}:${date.getMinutes()}`
-                setSocketOnline(false)
-                setMessages(oldMessages => [...oldMessages, { name: "Server", text: "You're diconnected", time }])
-
-            })
-            console.log('Emitted my id ' + id);
-            socketRef.current.emit('peerId', id)
-            peerRef.current.on('connection', (conn) =>
-            {
-                conn.on('open', () =>
+            let mainStream
+            navigator.mediaDevices
+                .getUserMedia({ audio: true })
+                .then(stream =>
                 {
-                    console.log('Connected to ');
-                    conn.on('data', data =>
+                    mainStream = stream
+                    setAudios([stream])
+                })
+                .then(() =>
+                {
+                    socketRef.current = io(serverIP)
+                    socketRef.current.emit("joinChat")
+                    socketRef.current.on('sucess', () =>
                     {
-                        if (data.type === 'message')
-                        {
-                            const { name, text } = data
-                            const time = "10:00"
-                            setMessages(old => [...old, { name, text, time }])
-                        }
+                        setSocketOnline(true)
                     })
-                    setConns(old => [...old, conn])
-                    conn.on('close', () =>
+                    socketRef.current.on('message', (name, text) =>
                     {
-                        setConns(old => old.filter(oldC => oldC !== conn))
-                        console.log('Closed conn ')
+                        const date = new Date()
+                        const time = `${date.getHours()}:${date.getMinutes()}`
+                        setMessages(oldMessages => [...oldMessages, { name, text, time }])
+                    })
+
+                    socketRef.current.on('disconnect', () =>
+                    {
+                        const date = new Date()
+                        const time = `${date.getHours()}:${date.getMinutes()}`
+                        setSocketOnline(false)
+                        setMessages(oldMessages => [...oldMessages, { name: "Server", text: "You're diconnected", time }])
+
+                    })
+                    console.log('Emitted my id ' + id);
+                    socketRef.current.emit('peerId', id)
+                    peerRef.current.on('call', (conn) =>
+                    {
+                        conn.answer(mainStream)
+                        conn.on('stream', stream =>
+                        {
+                            console.log('Got on call stream');
+                            setAudios(old => [...old, stream])
+                        })
+                        conn.on('open', () =>
+                        {
+                            console.log('Connected to ');
+                            conn.on('data', data =>
+                            {
+                                if (data.type === 'message')
+                                {
+                                    const { name, text } = data
+                                    const time = "10:00"
+                                    setMessages(old => [...old, { name, text, time }])
+                                }
+                            })
+                            setConns(old => [...old, conn])
+                            conn.on('close', () =>
+                            {
+                                setConns(old => old.filter(oldC => oldC !== conn))
+                                console.log('Closed conn ')
+                            })
+                        })
+                    })
+                    socketRef.current.on('peerId', otherPeerId =>
+                    {
+                        console.log('Got peerID from server ' + otherPeerId);
+                        const conn = peerRef.current.call(otherPeerId, mainStream)
+                        conn.on('stream', stream =>
+                        {
+                            console.log('Got to call stream');
+                            setAudios(old => [...old, stream])
+                        })
+                        conn.on('close', () =>
+                        {
+                            setConns(old => old.filter(oldC => oldC !== conn))
+                            console.log('Closed conn ' + otherPeerId)
+                        })
                     })
                 })
-            })
-            socketRef.current.on('peerId', otherPeerId =>
-            {
-                console.log('Got peerID from server ' + otherPeerId);
-                const conn = peerRef.current.connect(otherPeerId)
-                conn.on('open', () =>
-                {
-                    console.log('Connected to ' + otherPeerId);
-                    conn.on('data', data =>
-                    {
-                        if (data.type === 'message')
-                        {
-                            const { name, text } = data
-                            const time = "10:00"
-                            setMessages(old => [...old, { name, text, time }])
-                        }
-                    })
-                    setConns(old => [...old, conn])
-                    conn.on('close', () =>
-                    {
-                        setConns(old => old.filter(oldC => oldC !== conn))
-                        console.log('Closed conn ' + otherPeerId)
-                    })
-                })
-            })
         })
+
     }, [])
 
 
@@ -160,6 +183,16 @@ function Chat()
     }, [messasges, open])
     return (<>
         <Container maxWidth="md">
+            <br />
+            {audios.map((stream, i) =>
+            {
+                return <audio
+                    key={i}
+                    autoPlay
+                    controls
+                    ref={el => el ? el.srcObject = stream : null}
+                ></audio>
+            })}
             <br />
             <Card>
                 <CardHeader
