@@ -44,7 +44,8 @@ function Chat()
 
         if (voiceTry && socketOnline)
         {
-            navigator.mediaDevices.getUserMedia({ audio: true })
+            // navigator.mediaDevices.getUserMedia({ audio: true })
+            navigator.mediaDevices.getUserMedia({ video: { mediaSource: 'screen' } })
                 .then(myStream =>
                 {
                     myStream.myPlay = false
@@ -60,7 +61,8 @@ function Chat()
                             call.on('stream', otherPeerStream =>
                             {
                                 console.log('I call stream');
-                                otherPeerStream.myPlay = true
+                                otherPeerStream.myPlay = true //my custom property for autoPlay
+                                otherPeerStream.peerId = peerId //my custom property for closing connections
                                 setAudios(old => [...old, otherPeerStream])
                             })
                         })
@@ -73,6 +75,7 @@ function Chat()
                             {
                                 console.log('Called me stream');
                                 otherPeerStream.myPlay = true
+                                otherPeerStream.peerId = call.peer
                                 setAudios(old => [...old, otherPeerStream])
                             })
                         })
@@ -80,6 +83,9 @@ function Chat()
                         socketRef.current.on('peerGone', otherPeerId =>
                         {
                             console.log('Other peer left ' + otherPeerId);
+                            // console.log()
+                            peerRef.current.connections[otherPeerId][0].close()
+                            setAudios(old => [...old.filter(str => str.peerId !== otherPeerId)])
                         })
                     })
                     // setAudios([stream])
@@ -90,7 +96,10 @@ function Chat()
 
         // setAudios(['fuck'])
     }, [voiceTry, socketOnline])
+    useEffect(() =>
+    {
 
+    }, [audios])
 
     const handleSubmit = (event) =>
     {
@@ -199,7 +208,6 @@ function Chat()
                                 >
                                     {audios.map((audio, audioIndex) =>
                                     {
-                                        console.log(audio);
                                         return <ListItem
                                             button
                                             key={audioIndex}

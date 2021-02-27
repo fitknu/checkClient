@@ -64,7 +64,7 @@ const useStyles = makeStyles(theme => ({
 function BoardBot()
 {
     // console.log(JSON.stringify(initialState))
-    const [game, action] = useReducer(ReducerOffline, initialState)
+    const [game, action] = useReducer(ReducerOffline, { ...initialState, me: Logic.player1 })
 
     const classes = useStyles()
     const containerRef = useRef()
@@ -98,7 +98,7 @@ function BoardBot()
             {
                 console.log('getBestMove')
                 console.time()
-                const move = getBestMove(game.grid, 6, Logic.player2, botAttacks)
+                const move = getBestMove(game.grid, 1, Logic.player2, botAttacks)
                 console.timeEnd()
                 const nextGrid = JSON.parse(JSON.stringify(game.grid))
                 if (move === undefined)
@@ -136,6 +136,17 @@ function BoardBot()
         const timer = setTimeout(go, 500)
         return () => clearTimeout(timer)
     }, [game.grid, game.current_player, botAttacks])
+
+    useEffect(() =>
+    {
+        if (game.current_player === game.me && window.SpeechSynthesisUtterance)
+        {
+            const phrase = new SpeechSynthesisUtterance("Ваш ход.")
+            phrase.lang = 'ru-RU'
+            speechSynthesis.speak(phrase)
+        }
+
+    }, [game.current_player, game.me])
     return <Container ref={containerRef} maxWidth="md"
         className={classes.root}>
         <div
