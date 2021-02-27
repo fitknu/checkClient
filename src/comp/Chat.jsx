@@ -23,7 +23,7 @@ const useStyles = makeStyles(theme => ({
 function Chat()
 {
     const classes = useStyles()
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(true)
     const [myMessage, setMyMessage] = useState("")
     const [messasges, setMessages] = useState([])
 
@@ -32,30 +32,66 @@ function Chat()
 
     const socketRef = useRef()
     const [socketOnline, setSocketOnline] = useState(false)
-    const peerRef = useRef(new Peer())
+
+    const [voiceTry, setVoiceTry] = useState(false)
+    const peerRef = useRef()
     const [conns, setConns] = useState([])
 
     const [audios, setAudios] = useState([])
     // const [got, setGot] = use
     useEffect(() =>
     {
-        navigator.mediaDevices
-            .getUserMedia({ audio: true })
-            .then(stream =>
-            {
-                setAudios([stream])
-            })
-            .catch((e) => console.log(e))
-        // setAudios(['fuck'])
-    }, [])
 
-    useEffect(() =>
-    {
-        const next = [
-            { name: 'Владислав', text: 'Пока у нас нет аккаутов так что всех зовут Влад ахахаха', time: '10:00' }
-        ]
-        setMessages(next)
-    }, [])
+        if (voiceTry && socketOnline)
+        {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(myStream =>
+                {
+                    myStream.myPlay = false
+                    setAudios([myStream])
+                    peerRef.current = new Peer()
+                    peerRef.current.on('open', myPeerId =>
+                    {
+                        //Me calling others
+                        socketRef.current.on('peerId', peerId =>
+                        {
+                            console.log('I call');
+                            const call = peerRef.current.call(peerId, myStream)
+                            call.on('stream', otherPeerStream =>
+                            {
+                                console.log('I call stream');
+                                otherPeerStream.myPlay = true
+                                setAudios(old => [...old, otherPeerStream])
+                            })
+                        })
+                        //Others calling me
+                        peerRef.current.on('call', call =>
+                        {
+                            console.log('Called me');
+                            call.answer(myStream)
+                            call.on('stream', otherPeerStream =>
+                            {
+                                console.log('Called me stream');
+                                otherPeerStream.myPlay = true
+                                setAudios(old => [...old, otherPeerStream])
+                            })
+                        })
+                        socketRef.current.emit('peerId', myPeerId)
+                        socketRef.current.on('peerGone', otherPeerId =>
+                        {
+                            console.log('Other peer left ' + otherPeerId);
+                        })
+                    })
+                    // setAudios([stream])
+
+                })
+                .catch((e) => console.log(e))
+        }
+
+        // setAudios(['fuck'])
+    }, [voiceTry, socketOnline])
+
+
     const handleSubmit = (event) =>
     {
         if (event !== undefined)
@@ -66,101 +102,39 @@ function Chat()
         {
             return
         }
-        conns.forEach(conn => conn.send({ type: 'message', text: myMessage, name: "Archie" }))
-        // socketRef.current.emit('message', "Vlad", myMessage)
-        setMessages([...messasges, { name: 'Archie', text: myMessage, time: '10:00' }])
+        socketRef.current.emit('message', "Vlad", myMessage)
+        // setMessages([...messasges, { name: 'Archie', text: myMessage, time: '10:00' }])
         setMyMessage("")
         console.log('Submit')
     }
-
+    //Socket text chat stuff
     useEffect(() =>
     {
-        peerRef.current.on('open', id =>
+
+        socketRef.current = io(serverIP)
+        socketRef.current.emit("joinChat")
+        socketRef.current.on('sucess', () =>
         {
-            let mainStream
-            navigator.mediaDevices
-                .getUserMedia({ audio: true })
-                .then(stream =>
-                {
-                    mainStream = stream
-                    setAudios([stream])
-                })
-                .then(() =>
-                {
-                    socketRef.current = io(serverIP)
-                    socketRef.current.emit("joinChat")
-                    socketRef.current.on('sucess', () =>
-                    {
-                        setSocketOnline(true)
-                    })
-                    socketRef.current.on('message', (name, text) =>
-                    {
-                        const date = new Date()
-                        const time = `${date.getHours()}:${date.getMinutes()}`
-                        setMessages(oldMessages => [...oldMessages, { name, text, time }])
-                    })
+            setSocketOnline(true)
+        })
+        socketRef.current.on('message', (name, text) =>
+        {
+            const date = new Date()
+            const time = `${date.getHours()}:${date.getMinutes()}`
+            setMessages(oldMessages => [...oldMessages, { name, text, time }])
+        })
 
-                    socketRef.current.on('disconnect', () =>
-                    {
-                        const date = new Date()
-                        const time = `${date.getHours()}:${date.getMinutes()}`
-                        setSocketOnline(false)
-                        setMessages(oldMessages => [...oldMessages, { name: "Server", text: "You're diconnected", time }])
+        socketRef.current.on('disconnect', () =>
+        {
+            const date = new Date()
+            const time = `${date.getHours()}:${date.getMinutes()}`
+            setSocketOnline(false)
+            setMessages(oldMessages => [...oldMessages,
+            { name: "Server", text: "You're diconnected", time }])
 
-                    })
-                    console.log('Emitted my id ' + id);
-                    socketRef.current.emit('peerId', id)
-                    peerRef.current.on('call', (conn) =>
-                    {
-                        conn.answer(mainStream)
-                        conn.on('stream', stream =>
-                        {
-                            console.log('Got on call stream');
-                            setAudios(old => [...old, stream])
-                        })
-                        conn.on('open', () =>
-                        {
-                            console.log('Connected to ');
-                            conn.on('data', data =>
-                            {
-                                if (data.type === 'message')
-                                {
-                                    const { name, text } = data
-                                    const time = "10:00"
-                                    setMessages(old => [...old, { name, text, time }])
-                                }
-                            })
-                            setConns(old => [...old, conn])
-                            conn.on('close', () =>
-                            {
-                                setConns(old => old.filter(oldC => oldC !== conn))
-                                console.log('Closed conn ')
-                            })
-                        })
-                    })
-                    socketRef.current.on('peerId', otherPeerId =>
-                    {
-                        console.log('Got peerID from server ' + otherPeerId);
-                        const conn = peerRef.current.call(otherPeerId, mainStream)
-                        conn.on('stream', stream =>
-                        {
-                            console.log('Got to call stream');
-                            setAudios(old => [...old, stream])
-                        })
-                        conn.on('close', () =>
-                        {
-                            setConns(old => old.filter(oldC => oldC !== conn))
-                            console.log('Closed conn ' + otherPeerId)
-                        })
-                    })
-                })
         })
 
     }, [])
-
-
-
-
     const handleKey = (event) =>
     {
         if (event.key === 'Enter' && !event.shiftKey)
@@ -184,7 +158,7 @@ function Chat()
     return (<>
         <Container maxWidth="md">
             <br />
-            {audios.map((stream, i) =>
+            {/* {audios.map((stream, i) =>
             {
                 return <audio
                     key={i}
@@ -192,7 +166,7 @@ function Chat()
                     controls
                     ref={el => el ? el.srcObject = stream : null}
                 ></audio>
-            })}
+            })} */}
             <br />
             <Card>
                 <CardHeader
@@ -218,6 +192,45 @@ function Chat()
                         in={open}
                         unmountOnExit
                     >
+                        <Grid container>
+                            <Grid item>
+                                <List
+                                    subheader="Пользователи"
+                                >
+                                    {audios.map((audio, audioIndex) =>
+                                    {
+                                        console.log(audio);
+                                        return <ListItem
+                                            button
+                                            key={audioIndex}
+                                            onClick={() =>
+                                            {
+                                                audio.myPlay = !audio.myPlay
+                                                setAudios(old => [...old])
+                                            }}
+                                        >
+                                            <ListItemAvatar>
+                                                <Avatar>{audioIndex}</Avatar>
+                                            </ListItemAvatar>
+                                            <ListItemText
+                                                primary={audio.myPlay ?
+                                                    "Заглушить" : "Включить"}
+                                            />
+                                            <audio
+                                                ref={el => el ? el.srcObject = audio : null}
+                                                autoPlay={audio.myPlay}
+                                                controls
+                                                style={{ display: 'none' }}
+                                            ></audio>
+                                        </ListItem>
+                                    })}
+                                </List>
+                            </Grid>
+                            <Grid item>
+
+                            </Grid>
+                        </Grid>
+                        <Divider />
                         <List className={classes.messages}>
                             {messasges.map((message, messageIndex) =>
                             {
@@ -302,9 +315,13 @@ function Chat()
                                         />}
                                 />
                             </ListItem>
+                            <ListItem button onClick={() => setVoiceTry(!voiceTry)}>
+                                <ListItemText>{voiceTry ?
+                                    "Выключить голос" :
+                                    "Включить голос"}</ListItemText>
+                            </ListItem>
                         </List>
                     </Collapse>
-
                 </CardContent>
             </Card>
         </Container>
