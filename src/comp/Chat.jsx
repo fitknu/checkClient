@@ -1,6 +1,6 @@
 import
 {
-    Avatar, Button, Card, CardContent, CardHeader,
+    Avatar, Card, CardContent, CardHeader,
     Collapse, Container, Divider, Grid, IconButton,
     InputAdornment, Link, List, ListItem, ListItemAvatar,
     ListItemText, makeStyles, Tab, Tabs, TextField,
@@ -22,7 +22,7 @@ import { names } from "../names";
 
 const useStyles = makeStyles(theme => ({
     messages: {
-        maxHeight: theme.breakpoints.values.sm,
+        maxHeight: 350,
         overflowY: 'auto'
     },
     chatInput: {
@@ -57,7 +57,53 @@ function Chat()
     // const [got, setGot] = use
     useEffect(() =>
     {
-        // if (peerRef.current)
+        function go(myPeerId, myStream)
+        {
+            socketRef.current.emit('peerId', myPeerId)
+            socketRef.current.on('peerId', (otherPeerId) =>
+            {
+                console.log('peerId ' + otherPeerId);
+                const call = peerRef.current.call(otherPeerId, myStream)
+                // callsRef.current.push(call)
+                call.on('stream', otherPeerStream =>
+                {
+                    otherPeerStream.peerId = otherPeerId
+                    otherPeerStream.autoPlay = true
+                    setAudios(oldAudios => [...oldAudios, otherPeerStream])
+                })
+            })
+            peerRef.current.on('call', call =>
+            {
+                // callsRef.current.push(call)
+                call.answer(myStream)
+                call.on('stream', otherPeerStream =>
+                {
+                    otherPeerStream.peerId = call.peer
+                    otherPeerStream.autoPlay = true
+                    setAudios(oldAudios => [...oldAudios, otherPeerStream])
+                })
+            })
+            socketRef.current.on('peerLeft', (peerId) =>
+            {
+                console.log('peerLeft' + peerId);
+                setAudios(oldAudios => oldAudios.filter(oldAudio => oldAudio.peerId !== peerId))
+
+                try
+                {
+                    // const lostConnection = callsRef.current.find(call => call.peer === peerId)
+                    // lostConnection[0].close()
+                    peerRef.current.connections[peerId][0].close()
+                    // callsRef.current = callsRef.current.filter(call => call.peer !== peerId)
+
+                } catch (e) 
+                {
+                    console.log(peerRef.current.connections)
+                }
+
+
+            })
+
+        }
         //If user wants to speak and has connection to the server
         if (voiceTry && socketOnline)
         {
@@ -72,80 +118,34 @@ function Chat()
                     peerRef.current = new Peer()
                     peerRef.current.on('open', myPeerId =>
                     {
-
-                        //Me calling others
-                        socketRef.current.on('peerId', (peerId, peerName) =>
-                        {
-                            console.log('I call');
-                            const call = peerRef.current.call(peerId, myStream)
-                            call.on('stream', otherPeerStream =>
-                            {
-                                console.log('I call stream');
-                                otherPeerStream.myPlay = true //my custom property for autoPlay
-                                otherPeerStream.peerId = peerId //my custom property for closing connections
-                                otherPeerStream.peerName = peerName
-                                setAudios(old => [...old, otherPeerStream])
-
-                                //send my name to the peer i'm calling throught the server
-                                socketRef.current.emit('peerCall', peerId)
-                            })
-                        })
-                        //Others calling me
-                        peerRef.current.on('call', call =>
-                        {
-                            console.log('Called me');
-                            call.answer(myStream)
-                            call.on('stream', otherPeerStream =>
-                            {
-                                console.log('Called me stream');
-                                otherPeerStream.myPlay = true
-                                otherPeerStream.peerId = call.peer
-                                setAudios(old => [...old, otherPeerStream])
-                            })
-                        })
-                        //I got a name for one of my current media connection, so add that
-                        socketRef.current.on('peerCall', (otherPeerId, otherPeerName) =>
-                        {
-                            setAudios(oldAudios =>
-                            {
-                                const m = oldAudios.find(oldAudio => oldAudio.peerId === otherPeerId)
-                                m.peerName = otherPeerName
-                                return [...oldAudios]
-                            })
-                        })
-                        //Send my peerId to server to start the whole things
-                        socketRef.current.emit('peerId', myPeerId)
-                        //When someone leaves the voice chat
-                        socketRef.current.on('peerLeft', otherPeerId =>
-                        {
-                            console.log('Other peer left ' + otherPeerId);
-                            //Close the connection manualy, because peerJS does not do
-                            //that by automaticaly, athought sometimes it does so we need this check
-                            console.log(peerRef.current.connections);
-                            if (peerRef.current.connections[otherPeerId] && peerRef.current.connections[otherPeerId].length)
-                            {
-                                peerRef.current.connections[otherPeerId][0].close()
-                            }
-                            //Delete the peer from the list of audios
-                            setAudios(old => [...old.filter(str => str.peerId !== otherPeerId)])
-                        })
+                        go(myPeerId, myStream)
                     })
-                    // setAudios([stream])
 
                 })
-                .catch((e) => console.log(e))
+                .catch((e) =>
+                {
+                    console.log(e);
+                    setVoiceTry(false)
+                })
             //
         } else if (!voiceTry && peerRef.current)
         {
-            socketRef.current.emit('myPeerLeft')
+            setAudios([])
+            socketRef.current.emit('peerLeft')
             peerRef.current.destroy()
+            socketRef.current.off('peerId')
+            socketRef.current.off('peerLeft')
         }
         return () => 
         {
+            setAudios([])
             if (peerRef.current)
             {
-                socketRef.current.emit('myPeerLeft')
+                socketRef.current.emit('peerLeft')
                 peerRef.current.destroy()
+                socketRef.current.off('peerId')
+                socketRef.current.off('peerLeft')
+
             }
         }
 
@@ -170,7 +170,7 @@ function Chat()
 
         socketRef.current.on('debug', answer => console.log(answer))
         socketRef.current.on('login', status => setSocketOnline(status))
-        socketRef.current.on('userJoined', userName =>
+        socketRef.current.on('newUser', userName =>
         {
             console.log('Got a name' + userName)
             setUsers(old =>
@@ -178,32 +178,6 @@ function Chat()
                 const next = [...old, { userName, inVoiceChat: false }]
                 // console.log('NExt ' + next);
                 return next
-            })
-        })
-        socketRef.current.on('userJoinedVoice', userName =>
-        {
-            setUsers(oldUsers =>
-            {
-                const userThatJoinedVoice = oldUsers.find(oldUser => oldUser.userName === userName)
-                if (userThatJoinedVoice)
-                {
-                    userThatJoinedVoice.inVoiceChat = true
-
-                }
-                return [...oldUsers]
-            })
-        })
-        socketRef.current.on('userLeftVoice', userName =>
-        {
-            setUsers(oldUsers =>
-            {
-                const userThatLeftVoice = oldUsers.find(oldUser => oldUser.userName === userName)
-                if (userThatLeftVoice)
-                {
-                    userThatLeftVoice.inVoiceChat = false
-
-                }
-                return [...oldUsers]
             })
         })
         socketRef.current.on('userLeft', userName =>
@@ -225,6 +199,31 @@ function Chat()
             setMessages(oldMessages => [...oldMessages,
             { name: "Server", text: "You're diconnected", time }])
 
+        })
+
+        socketRef.current.on('voiceJoined', userName =>
+        {
+            setUsers(oldUsers =>
+            {
+                const m = oldUsers.find(user => user.userName === userName)
+                m.inVoiceChat = true
+                return [...oldUsers]
+            })
+        })
+
+        socketRef.current.on('voiceLeft', userName =>
+        {
+            setUsers(oldUsers =>
+            {
+                const m = oldUsers.find(user => user.userName === userName)
+                //the user might already be delete
+                if (m)
+                {
+                    m.inVoiceChat = false
+
+                }
+                return [...oldUsers]
+            })
         })
         return () => socketRef.current.close()
     }, [])
@@ -280,8 +279,6 @@ function Chat()
     }, [myName, users])
     return (<>
         <Container maxWidth="md">
-            <br />
-            <br />
             <Card>
                 <CardHeader
                     avatar={
@@ -364,7 +361,7 @@ function Chat()
                                     </IconButton>}
                                 <audio
                                     ref={el => el ? el.srcObject = audio : null}
-                                    autoPlay={audio.myPlay}
+                                    autoPlay={audio.autoPlay}
                                     controls
                                     style={{ display: 'none' }}
                                 ></audio>
@@ -403,9 +400,12 @@ function Chat()
                                         return <ListItem
                                             key={messageIndex}
                                             alignItems="flex-start"
+                                            style={{ paddingTop: '0px', paddingBottom: 0 }}
                                         >
-                                            <ListItemAvatar>
+                                            <ListItemAvatar style={{ visibility: 'hidden' }}>
+                                                <Avatar>
 
+                                                </Avatar>
                                             </ListItemAvatar>
                                             <ListItemText
                                                 secondary={text}

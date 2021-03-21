@@ -1,5 +1,5 @@
 import { useContext, useRef, useState } from "react";
-import { AppBar, Card, CardContent, Container, Dialog, Divider, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, makeStyles, SwipeableDrawer, Tab, Tabs, TextField, Toolbar, Typography } from "@material-ui/core"
+import { AppBar, Card, CardContent, CardHeader, Container, Dialog, Divider, Grid, IconButton, InputLabel, List, ListItem, ListItemIcon, ListItemText, makeStyles, MenuItem, Select, Slider, SwipeableDrawer, Tab, Tabs, TextField, Toolbar, Typography } from "@material-ui/core"
 import { Link as RouterLink, useRouteMatch } from 'react-router-dom'
 import MenuIcon from '@material-ui/icons/Menu';
 import PeopleIcon from '@material-ui/icons/People';
@@ -8,9 +8,10 @@ import DesktopWindowsIcon from '@material-ui/icons/DesktopWindows';
 import SupervisedUserCircleRoundedIcon from '@material-ui/icons/SupervisedUserCircleRounded';
 import GroupAddIcon from '@material-ui/icons/GroupAdd';
 import FileCopyIcon from '@material-ui/icons/FileCopy';
+import SettingsIcon from '@material-ui/icons/Settings';
 import Login from "./Login";
 import SourceContext from "../Source/Source";
-
+import Logic from '../Game/Logic'
 function useRouteName()
 {
     const onlineMatch = useRouteMatch('/online')
@@ -39,7 +40,7 @@ const useStyle = makeStyles(theme => ({
 }))
 function Navigation()
 {
-    const { state } = useContext(SourceContext)
+    const { state, action } = useContext(SourceContext)
     const classes = useStyle()
     const [menu, setMenu] = useState(false)
     const anchorRef = useRef()
@@ -47,6 +48,7 @@ function Navigation()
     const [log, setLog] = useState(false)
 
     const [inviteLink, setInviteLink] = useState(false)
+    const [botMenu, setBotMenu] = useState(true)
     return <>
         <AppBar position="static">
             <Toolbar>
@@ -117,9 +119,69 @@ function Navigation()
                         />
                     </ListItem>
                 </>}
+                {routeName === "Игра против компьютера" &&
+                    <>
+                        <Divider />
+                        <ListItem
+                            onClick={() => setBotMenu(true)}
+                            button
+                        >
+                            <ListItemIcon>
+                                <SettingsIcon />
+                            </ListItemIcon>
+                            <ListItemText
+                                primary="Настройки матча"
+                            />
+                        </ListItem>
+                    </>}
             </List>
         </SwipeableDrawer>
+        <Dialog
+            open={botMenu}
+            onClose={() => setBotMenu(false)}
+        >
+            <Card
+                style={{ padding: '0rem 1.5rem' }}
 
+            >
+                <CardHeader
+                    title="Настройки матча"
+                />
+                <CardContent>
+                    <Grid container direction="row" alignItems="center" spacing={1}>
+                        <Grid item>
+                            <Typography component="span">Выбор команды: </Typography>
+                        </Grid>
+                        <Grid item>
+                            <Select
+                                value={state.botMyTeam}
+                                onChange={(e, botMyTeam) => action({ type: 'setBotMyTeam', botMyTeam: e.target.value })}
+                            >
+                                <MenuItem value={Logic.player1}>Белые</MenuItem>
+                                <MenuItem value={Logic.player2}>Чёрные</MenuItem>
+                            </Select>
+                        </Grid>
+                    </Grid>
+                    <br />
+                    <Typography>
+                        Сложность игры
+                    </Typography>
+                    <Slider
+                        value={state.botLevel}
+                        onChange={(e, botLevel) => action({ type: 'setBotLevel', botLevel })}
+                        marks={[
+                            { value: 1, label: 'Новичок' },
+                            { value: 3, label: 'Игрок' },
+                            { value: 5, label: 'Профи' }
+                        ]}
+                        getAriaValueText={() => { return "hello" }}
+                        step={1}
+                        min={1}
+                        max={5}
+                    />
+                </CardContent>
+            </Card>
+        </Dialog>
         <Dialog
             open={inviteLink}
             onClose={() => setInviteLink(false)}

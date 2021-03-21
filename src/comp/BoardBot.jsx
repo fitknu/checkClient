@@ -1,5 +1,5 @@
 import { Container, makeStyles } from "@material-ui/core"
-import { useEffect, useReducer, useRef, useState } from "react"
+import { useContext, useEffect, useReducer, useRef, useState } from "react"
 import imgs from '../imgs.json'
 
 import ReducerOffline from '../Game/ReducerOffline'
@@ -9,6 +9,7 @@ import getCssClass from "../Game/getCssClass"
 import colClick_offline from "../Game/colClick_offline"
 import Logic from '../Game/Logic'
 import getBestMove from '../Game/minmax'
+import SourceContext from "../Source/Source"
 
 const useStyles = makeStyles(theme => ({
     root: {
@@ -63,7 +64,8 @@ const useStyles = makeStyles(theme => ({
 }))
 function BoardBot()
 {
-    // console.log(JSON.stringify(initialState))
+    const sourceState = useContext(SourceContext).state
+
     const [game, action] = useReducer(ReducerOffline, { ...initialState, me: Logic.player1 })
 
     const classes = useStyles()
@@ -71,7 +73,11 @@ function BoardBot()
     const [size, setSize] = useState(200)
 
     const [botAttacks, setBotAttacks] = useState(false)
-    useEffect(() => action({ type: 'setPlayer', player: Logic.player1 }), [])
+    useEffect(() =>
+    {
+        action({ type: 'setPlayer', player: sourceState.botMyTeam })
+    }, [sourceState.botMyTeam])
+
     useEffect(() =>
     {
         function resize()
@@ -93,12 +99,13 @@ function BoardBot()
     {
         function go()
         {
-            console.log(`useEffect: ${game.current_player === Logic.player2}`)
-            if (game.current_player === Logic.player2)
+            if (game.current_player !== game.me)
             {
-                console.log('getBestMove')
+
+                const botLevel = sourceState.botLevel
+                console.log(`botLevel ${botLevel}`);
                 console.time()
-                const move = getBestMove(game.grid, 1, Logic.player2, botAttacks)
+                const move = getBestMove(game.grid, botLevel, game.current_player, botAttacks)
                 console.timeEnd()
                 const nextGrid = JSON.parse(JSON.stringify(game.grid))
                 if (move === undefined)
@@ -110,8 +117,7 @@ function BoardBot()
                     const { start_row, start_col, end_row, end_col } = move
                     Logic.move(nextGrid, start_row, start_col, end_row, end_col)
                     action({ type: 'setGrid', grid: nextGrid })
-                    action({ type: 'setCurrentPlayer', player: Logic.player1 })
-                    console.log('set Player 1')
+                    action({ type: 'setCurrentPlayer', player: Logic.get_other_player(game.current_player) })
 
 
                 } else
@@ -126,7 +132,7 @@ function BoardBot()
                     } else 
                     {
                         setBotAttacks(false)
-                        action({ type: 'setCurrentPlayer', player: Logic.player1 })
+                        action({ type: 'setCurrentPlayer', player: Logic.get_other_player(game.current_player) })
 
                     }
 
@@ -135,7 +141,7 @@ function BoardBot()
         }
         const timer = setTimeout(go, 500)
         return () => clearTimeout(timer)
-    }, [game.grid, game.current_player, botAttacks])
+    }, [game.grid, game.me, game.current_player, botAttacks, sourceState.botLevel])
 
     useEffect(() =>
     {
@@ -150,7 +156,7 @@ function BoardBot()
     return <Container ref={containerRef} maxWidth="md"
         className={classes.root}>
         <div
-            className={game.current_player === Logic.player1 ?
+            className={game.current_player === game.me ?
                 classes.turn_me : classes.turn_other}
         >
             {game.grid.map((row, rowIndex) => 

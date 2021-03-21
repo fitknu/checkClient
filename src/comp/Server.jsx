@@ -1,15 +1,13 @@
-import { Button, Container, Divider, fade, Grid, IconButton, InputAdornment, InputBase, List, ListItem, makeStyles, TextField } from "@material-ui/core";
-import { useCallback, useEffect, useState } from "react";
+import { Button, Container, Divider, fade, Grid, IconButton, InputAdornment, List, ListItem, makeStyles, TextField } from "@material-ui/core";
+import { useEffect, useState } from "react";
 import SearchIcon from '@material-ui/icons/Search';
 import CloseIcon from '@material-ui/icons/Close';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import LinearProgress from '@material-ui/core/LinearProgress';
 import { Link as RouterLink, useHistory, useLocation } from 'react-router-dom'
 import BoardOnline from "./BoardOnline";
 import { serverIP } from "../config";
 import Fuse from 'fuse.js'
 import Chat from "./Chat";
-import Test from "./Test";
 const useStyles = makeStyles(theme => ({
     root: {
         // backgroundColor: theme.palette.action.hover,
@@ -24,7 +22,9 @@ const useStyles = makeStyles(theme => ({
     },
     table: {
         boxSizing: 'border-box',
-        width: '100%'
+        width: '100%',
+        maxHeight: 550,
+        overflowY: 'auto'
     },
     head: {
         backgroundColor: theme.palette.action
@@ -171,61 +171,69 @@ function Server()
     return (
         <>
 
-            <Container maxWidth="md" className={classes.root}>
+            <Container maxWidth="xl" className={classes.root}>
                 <br />
-                <Chat />
+                <Grid container
+                    style={{ width: '100%' }}
+                    spacing={1} justify="center" >
+                    <Grid item sm={12} lg={8}>
+                        <Button onClick={goRandom}
+                            size="large" variant="contained" color="secondary">
+                            НАЧАТЬ ИГРАТЬ
+                        </Button>
+                        <br />
+                        <br />
+                        <TextField
+                            value={search}
+                            onChange={(e) => Search(e.target.value)}
+                            label="Поиск севера"
+                            variant="outlined"
+                            fullWidth
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon />
+                                    </InputAdornment>
+                                ),
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton onClick={() => Search("")}
+                                            style={search.length > 0 ?
+                                                { display: 'inline-block' } :
+                                                { display: 'none' }}>
+                                            <CloseIcon />
+                                        </IconButton>
+                                    </InputAdornment>
+                                )
+                            }}
+                        >
 
+                        </TextField>
+                        <List className={classes.table}>
+                            <ListItem>
+                                <Grid className={classes.head} container item xs={12}>
+                                    <Grid item xs={6} sm={4}> <strong>Название</strong> </Grid>
+                                    <Grid item xs={6} sm={4}> <strong>Статус</strong> </Grid>
+                                    <Grid item xs={12} sm={4}></Grid>
+                                </Grid>
+                            </ListItem>
+                            <Divider />
+                            {loading ?
+                                <ListItem style={{ display: 'flex', marginTop: '1rem', justifyContent: 'center' }}>
+                                    <CircularProgress size="100px" />
+                                </ListItem>
+                                : searchServers.map((server, index) => 
+                                {
+                                    return <Row name={server.name} id={server.id} status={server.status} key={server.name} index={index} joinMode={joinMode} />
+                                })}
+                        </List>
+                    </Grid>
+                    <Grid item sm={12} lg={4}>
+                        <Chat />
+                    </Grid>
+                </Grid>
                 <br />
-                <Button onClick={goRandom}
-                    size="large" variant="contained" color="secondary">
-                    Быстрая игра
-                </Button>
-                <br />
-                <br />
-                <TextField
-                    value={search}
-                    onChange={(e) => Search(e.target.value)}
-                    label="Поиск севера"
-                    variant="outlined"
-                    fullWidth
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon />
-                            </InputAdornment>
-                        ),
-                        endAdornment: (
-                            <InputAdornment position="end">
-                                <IconButton onClick={() => Search("")}
-                                    style={search.length > 0 ?
-                                        { display: 'inline-block' } :
-                                        { display: 'none' }}>
-                                    <CloseIcon />
-                                </IconButton>
-                            </InputAdornment>
-                        )
-                    }}
-                >
 
-                </TextField>
-                <List className={classes.table}>
-                    <ListItem>
-                        <Grid className={classes.head} container item xs={12}>
-                            <Grid item xs={6} sm={4}> <strong>Название</strong> </Grid>
-                            <Grid item xs={6} sm={4}> <strong>Статус</strong> </Grid>
-                            <Grid item xs={12} sm={4}></Grid>
-                        </Grid>
-                    </ListItem>
-                    <Divider />
-                    {loading ?
-                        <ListItem style={{ display: 'flex', marginTop: '1rem', justifyContent: 'center' }}>
-                            <CircularProgress size="100px" />
-                        </ListItem>
-                        : searchServers.map((server, index) => 
-                        {
-                            return <Row name={server.name} id={server.id} status={server.status} key={server.name} index={index} joinMode={joinMode} />
-                        })}
-                </List>
             </Container>
 
             <br />

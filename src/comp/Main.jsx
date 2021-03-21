@@ -24,17 +24,14 @@ function Main()
             <CssBaseline />
             <SourceContext.Provider value={{ state, action }}>
                 <BrowserRouter>
-                    <Navigation
-                    />
+                    <Navigation />
                     <Switch>
                         <Route exact path='/' component={Server} />
                         <Route path="/online" component={Server} />
                         <Route path="/bot" component={BoardBot} />
                         <Route path="/offline" component={BoardOffline}>
                         </Route>
-                        <Route path="/user">
-                            <Profile />
-                        </Route>
+                        <Route path="/user" component={Profile} />
                     </Switch>
                 </BrowserRouter>
             </SourceContext.Provider>

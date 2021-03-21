@@ -1,11 +1,11 @@
+
 import { Button, CircularProgress, Container, makeStyles, Typography } from "@material-ui/core"
 import { useContext, useEffect, useReducer, useRef, useState } from "react"
-import { io, Socket } from "socket.io-client"
+import { io } from "socket.io-client"
 import { Link as RouterLink } from 'react-router-dom'
 import getCssClass from "../Game/getCssClass"
 import reducerOnline from "../Game/reducerOnline"
 import stateOnline from "../Game/stateOnline"
-import Logic from '../Game/Logic'
 import colClick_online from "../Game/colClick_online"
 import imgs from '../imgs.json'
 import { serverIP } from "../config"
