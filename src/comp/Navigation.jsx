@@ -48,7 +48,7 @@ function Navigation()
     const [log, setLog] = useState(false)
 
     const [inviteLink, setInviteLink] = useState(false)
-    const [botMenu, setBotMenu] = useState(true)
+    const [botMenu, setBotMenu] = useState(false)
     return <>
         <AppBar position="static">
             <Toolbar>
