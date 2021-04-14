@@ -1,4 +1,3 @@
-
 import { Button, CircularProgress, Container, makeStyles, Typography } from "@material-ui/core"
 import { useContext, useEffect, useReducer, useRef, useState } from "react"
 import { io } from "socket.io-client"
@@ -188,12 +187,12 @@ function BoardOnline({ name, id, mode })
     {
         if (load === "game")
         {
-            sourceAction({ type: 'setOnlineGameId', id })
+            sourceAction({ type: 'setOnline_gameId', id })
         } else 
         {
-            sourceAction({ type: 'setOnlineGameId', id: null })
+            sourceAction({ type: 'setOnline_gameId', id: null })
         }
-        return () => sourceAction({ type: 'setOnlineGameId', id: null })
+        return () => sourceAction({ type: 'setOnline_gameId', id: null })
     }, [load, id, sourceAction])
     if (load === "loading")
     {

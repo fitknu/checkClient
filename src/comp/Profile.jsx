@@ -14,12 +14,17 @@ function Profile()
                 <Card>
                     <CardHeader
                         avatar={
-                            <Avatar>{name.slice(0, 1)}</Avatar>
+                            <Avatar
+                                style={{ width: 50, height: 50 }}
+                            >{name.slice(0, 1)}</Avatar>
                         }
                         title={name}
                         subheader={email}
                     />
                     <CardContent>
+                        <Typography>Всего игр: 30</Typography>
+                        <Typography>Побед: 30</Typography>
+                        <Typography>Проиграшей: 30</Typography>
                         <ButtonGroup variant="outlined">
                             <Button
                                 onClick={() => page === 'games' ?

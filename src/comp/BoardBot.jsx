@@ -75,8 +75,8 @@ function BoardBot()
     const [botAttacks, setBotAttacks] = useState(false)
     useEffect(() =>
     {
-        action({ type: 'setPlayer', player: sourceState.botMyTeam })
-    }, [sourceState.botMyTeam])
+        action({ type: 'setPlayer', player: sourceState.bot_me })
+    }, [sourceState.bot_me])
 
     useEffect(() =>
     {
@@ -102,7 +102,7 @@ function BoardBot()
             if (game.current_player !== game.me)
             {
 
-                const botLevel = sourceState.botLevel
+                const botLevel = sourceState.bot_level
                 console.log(`botLevel ${botLevel}`);
                 console.time()
                 const move = getBestMove(game.grid, botLevel, game.current_player, botAttacks)
@@ -141,7 +141,7 @@ function BoardBot()
         }
         const timer = setTimeout(go, 500)
         return () => clearTimeout(timer)
-    }, [game.grid, game.me, game.current_player, botAttacks, sourceState.botLevel])
+    }, [game.grid, game.me, game.current_player, botAttacks, sourceState.bot_level])
 
     useEffect(() =>
     {

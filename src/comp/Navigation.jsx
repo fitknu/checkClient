@@ -1,11 +1,14 @@
+//@ts-check
 import { useContext, useRef, useState } from "react";
-import { AppBar, Card, CardContent, CardHeader, Container, Dialog, Divider, Grid, IconButton, InputLabel, List, ListItem, ListItemIcon, ListItemText, makeStyles, MenuItem, Select, Slider, SwipeableDrawer, Tab, Tabs, TextField, Toolbar, Typography } from "@material-ui/core"
+import { AppBar, Card, CardContent, CardHeader, Dialog, Divider, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, makeStyles, MenuItem, Select, Slider, SwipeableDrawer, Toolbar, Typography } from "@material-ui/core"
 import { Link as RouterLink, useRouteMatch } from 'react-router-dom'
 import MenuIcon from '@material-ui/icons/Menu';
 import PeopleIcon from '@material-ui/icons/People';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import DesktopWindowsIcon from '@material-ui/icons/DesktopWindows';
 import SupervisedUserCircleRoundedIcon from '@material-ui/icons/SupervisedUserCircleRounded';
+import SportsEsportsIcon from '@material-ui/icons/SportsEsports';
+
 import GroupAddIcon from '@material-ui/icons/GroupAdd';
 import FileCopyIcon from '@material-ui/icons/FileCopy';
 import SettingsIcon from '@material-ui/icons/Settings';
@@ -87,6 +90,13 @@ function Navigation()
                 <ListItem button component={RouterLink}
                     to="/online" onClick={() => setMenu(false)}>
                     <ListItemIcon>
+                        <SportsEsportsIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Турниры" />
+                </ListItem>
+                <ListItem button component={RouterLink}
+                    to="/online" onClick={() => setMenu(false)}>
+                    <ListItemIcon>
                         <PeopleIcon />
                     </ListItemIcon>
                     <ListItemText primary="Онлайн игра" />
@@ -105,7 +115,7 @@ function Navigation()
                     </ListItemIcon>
                     <ListItemText primary="Оффлайн игра" />
                 </ListItem>
-                {state.onlineGameId && <>
+                {state.online_gameId && <>
                     <Divider />
                     <ListItem
                         onClick={() => setInviteLink(true)}
@@ -154,8 +164,9 @@ function Navigation()
                         </Grid>
                         <Grid item>
                             <Select
-                                value={state.botMyTeam}
-                                onChange={(e, botMyTeam) => action({ type: 'setBotMyTeam', botMyTeam: e.target.value })}
+                                value={state.bot_me}
+                                // @ts-ignore
+                                onChange={(e, botMyTeam) => action({ type: 'setBot_me', me: e.target.value })}
                             >
                                 <MenuItem value={Logic.player1}>Белые</MenuItem>
                                 <MenuItem value={Logic.player2}>Чёрные</MenuItem>
@@ -167,8 +178,9 @@ function Navigation()
                         Сложность игры
                     </Typography>
                     <Slider
-                        value={state.botLevel}
-                        onChange={(e, botLevel) => action({ type: 'setBotLevel', botLevel })}
+                        value={state.bot_level}
+                        // @ts-ignore
+                        onChange={(e, botLevel) => action({ type: 'setBot_level', level: botLevel })}
                         marks={[
                             { value: 1, label: 'Новичок' },
                             { value: 3, label: 'Игрок' },
@@ -200,13 +212,13 @@ function Navigation()
                         className={classes.inviteLink}
                     >
                         <Grid item>
-                            {`https://${window.location.hostname}/online?id=${state.onlineGameId}&mode=auto`}
+                            {`https://${window.location.hostname}/online?id=${state.online_gameId}&mode=auto`}
                         </Grid>
                         <Grid item>
                             <IconButton
                                 onClick={() =>
                                 {
-                                    navigator.clipboard.writeText(`https://${window.location.hostname}/online?id=${state.onlineGameId}&mode=auto`)
+                                    navigator.clipboard.writeText(`https://${window.location.hostname}/online?id=${state.online_gameId}&mode=auto`)
                                 }}>
                                 <FileCopyIcon />
                             </IconButton>
